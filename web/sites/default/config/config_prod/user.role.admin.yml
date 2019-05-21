@@ -1,0 +1,22 @@
+uuid: 284cf4b5-afcc-4e78-a9d2-e0fc7e76e1bf
+langcode: en
+status: true
+dependencies: {  }
+id: admin
+label: ADMIN
+weight: -7
+is_admin: null
+permissions:
+  - 'access content overview'
+  - 'access user profiles'
+  - 'administer account settings'
+  - 'administer nodes'
+  - 'administer users'
+  - 'administer workflows'
+  - 'cancel account'
+  - 'change own username'
+  - 'delete any page content'
+  - 'delete page revisions'
+  - 'edit any page content'
+  - 'revert page revisions'
+  - 'select account cancellation method'

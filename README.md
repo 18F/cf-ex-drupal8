@@ -2,7 +2,7 @@
 
 In-progress Drupal 8 example for Cloud Foundry
 
-The overall aim here is to help Drupal site administrators understand how to run a production-worthy Drupal 8 site in Cloud Foundry. 
+The overall aim here is to help Drupal site administrators understand how to run a production-worthy Drupal 8 site in Cloud Foundry.
 
 This includes:
 * this is how you run this thing
@@ -14,6 +14,57 @@ We'll also provide some guidance on what someone would need to do to reproduce t
 The code examples target [cloud.gov](https://cloud.gov) but should be amenable to any Cloud Foundry foundations that provide MySQL and object storage (_a la_ AWS's S3).
 
 The goal here is for folks who are just getting started with cloud.gov to have an eye-poppingly simple route from “I have a cloud.gov account” to “I have a production-worthy Drupal site running on a FedRAMP-authorized CSP that I understand how to update, just waiting for me to customize it”.
+
+## Quickstart
+
+Locally:
+
+```sh
+bin/composer install
+```
+
+Test with docker-compose, and view at http://localhost:8080
+
+```sh
+docker-compose up
+```
+
+With cloud.gov, and view at the random-route selected:
+
+```
+cf create-service aws-rds medium-mysql database # Takes 5-10m
+cf create-user-provided-service secrets -p '{
+              "ADMIN_EMAIL": "secret@example.com",
+              "CRON_KEY": "SECRET",
+              "HASH_SALT": "SECRET",
+              "ROOT_USER_NAME": "root",
+              "ROOT_USER_PASS": "root",
+              "ENVIRONMENT": "PROD",
+            }'
+cf create-service s3 basic-sandbox storage
+cf push
+```
+
+
+
+### Quick Reset
+
+Reset docker-compose:
+
+```sh
+docker-compose down -v
+```
+
+Reset cloud foundry / cloud.gov:
+
+```sh
+cf delete -f web
+cf delete -f cronish
+cf delete-service -f secrets
+cf delete-service -f database
+cf delete-service -f storage
+cf delete-orphaned-routes -f
+```
 
 ## Developing locally
 
@@ -75,6 +126,22 @@ faster.
 
 As the service runs, we can directly modify the PHP files in our app and see
 our changes in near-real time.
+
+### Development only dependencies
+
+We use [config-split](https://www.drupal.org/project/config_split) to enable some modules only in development. For example the devel module is handy locally because it can create fake data to test things, but it is not something you want in a production environment because it is easy to make a mistake and publish dummy data to production.
+
+
+To import the extra modules run the command in your development environment
+```
+drush config-split:import
+```
+Make sure you *don't* have `"ENVIRONMENT"` set to `"PROD"` in your local environment. The cloud.gov directions are configured to have this split going by default.
+
+You can add additional modules as development only using config-split. Once you make changes to the split locally, run":
+```
+drush config-split:export
+```
 
 ### Making styling changes
 
@@ -183,7 +250,7 @@ next use composer. For example:
 bin/composer require drupal/some-new-module
 ```
 
-See the "Removing dependencies" section below for notes on that topic; it's a
+See the ["Removing dependencies"](#Removing-dependencies) section below for notes on that topic; it's a
 bit different than installation/updates.
 
 If we're making admin changes (including enabling any newly installed
@@ -493,11 +560,24 @@ cf env web
 ```
 
 and look in the results for the credentials of our "secrets" service (it'll be
-part of the `VCAP_SERVICES` section). Then, we update our `secrets` service
-like so:
+part of the `VCAP_SERVICES` section). Then, we update our `secrets` service.
+
+You will need to set the following variables with your secret values.
+
+  "ENVIRONMENT": "PROD",
+  "ADMIN_EMAIL": "your@email.com",
+  "CRON_KEY": "REPLACE_WITH_YOUR_SECRET",
+  "HASH_SALT": "REPLACE_WITH_YOUR_SECRET",
+  "ROOT_USER_NAME": "REPLACE_WITH_YOUR_SECRET",
+  "ROOT_USER_PASS": "REPLACE_WITH_YOUR_SECRET"
+
+
+Include all of the variables with your values. The `PROD` variable adds additional protections to the production environment.
+
+Here is the command with a shortened list:
 
 ```
-cf update-user-provided-service secrets -p '{"SAMPLE_ACCOUNT":"Some Value", "SAMPLE_CLIENT":"Another value", ...}'
+cf update-user-provided-service secrets -p '{"ENVIRONMENT": "PROD", "ADMIN_EMAIL": "your@email.com", ...}'
 ```
 
 ### Updating PHP

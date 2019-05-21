@@ -10,6 +10,9 @@ module:
   color: 0
   comment: 0
   config: 0
+  config_filter: 0
+  config_role_split: 0
+  config_split: 0
   config_update: 0
   content_moderation: 0
   contextual: 0
@@ -18,8 +21,6 @@ module:
   dblog: 0
   default_content: 0
   default_content_deploy: 0
-  devel: 0
-  devel_generate: 0
   diff: 0
   dynamic_page_cache: 0
   editor: 0
